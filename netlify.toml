@@ -1,0 +1,96 @@
+[build]
+  base = "."
+  command = "cd artifacts/trading-dashboard && npm run build"
+  publish = "artifacts/trading-dashboard/dist/public"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[dev]
+  command = "cd artifacts/trading-dashboard && npm run dev"
+  port = 5173
+  targetPort = 5173
+  autoLaunch = false
+
+# ── API Redirects ─────────────────────────────────────────────────────────────
+# Map /api/* paths to Netlify Functions so frontend code doesn't need to change
+
+[[redirects]]
+  from = "/api/healthz"
+  to = "/.netlify/functions/api-health"
+  status = 200
+
+[[redirects]]
+  from = "/api/signals/latest"
+  to = "/.netlify/functions/api-signals"
+  status = 200
+
+[[redirects]]
+  from = "/api/signals"
+  to = "/.netlify/functions/api-signals"
+  status = 200
+
+[[redirects]]
+  from = "/api/trades/*"
+  to = "/.netlify/functions/api-trades"
+  status = 200
+
+[[redirects]]
+  from = "/api/trades"
+  to = "/.netlify/functions/api-trades"
+  status = 200
+
+[[redirects]]
+  from = "/api/dashboard/summary"
+  to = "/.netlify/functions/api-dashboard"
+  status = 200
+
+[[redirects]]
+  from = "/api/dashboard/pnl-chart"
+  to = "/.netlify/functions/api-dashboard"
+  status = 200
+
+[[redirects]]
+  from = "/api/dashboard/engine-accuracy"
+  to = "/.netlify/functions/api-dashboard"
+  status = 200
+
+[[redirects]]
+  from = "/api/market/quotes/batch"
+  to = "/.netlify/functions/nse-quotes"
+  status = 200
+
+[[redirects]]
+  from = "/api/market/quotes"
+  to = "/.netlify/functions/nse-quotes"
+  status = 200
+
+[[redirects]]
+  from = "/api/market/stocks"
+  to = "/.netlify/functions/nse-sectors"
+  status = 200
+
+[[redirects]]
+  from = "/api/market/sectors"
+  to = "/.netlify/functions/nse-sectors"
+  status = 200
+
+[[redirects]]
+  from = "/api/market/search"
+  to = "/.netlify/functions/nse-search"
+  status = 200
+
+# SPA fallback — serve index.html for client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# ── Security Headers ──────────────────────────────────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

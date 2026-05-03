@@ -29,7 +29,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2 font-mono font-bold tracking-tighter text-xl">
             <span className="text-primary">Bharat</span>
             <span className="text-foreground">X</span>
-            <span className="text-muted-foreground text-xs ml-2 rounded-full border px-2 py-0.5">DEV</span>
+            <span className="text-muted-foreground text-xs ml-2 rounded-full border px-2 py-0.5">
+              {import.meta.env.PROD ? "LIVE" : "DEV"}
+            </span>
           </div>
         </div>
         
