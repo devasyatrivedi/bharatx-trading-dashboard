@@ -4,6 +4,7 @@ import {
   Activity, 
   ListOrdered, 
   BarChart3, 
+  TrendingUp,
   ServerCrash
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/signals", label: "Signals", icon: Activity },
     { href: "/trades", label: "Paper Trades", icon: ListOrdered },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
+    { href: "/market", label: "NSE Market", icon: TrendingUp },
   ];
 
   return (

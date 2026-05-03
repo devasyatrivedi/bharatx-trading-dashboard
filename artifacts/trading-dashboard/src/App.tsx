@@ -8,6 +8,7 @@ import Dashboard from "@/pages/dashboard";
 import SignalsPage from "@/pages/signals";
 import TradesPage from "@/pages/trades";
 import AnalyticsPage from "@/pages/analytics";
+import MarketPage from "@/pages/market";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -27,6 +28,7 @@ function Router() {
         <Route path="/signals" component={SignalsPage} />
         <Route path="/trades" component={TradesPage} />
         <Route path="/analytics" component={AnalyticsPage} />
+        <Route path="/market" component={MarketPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
