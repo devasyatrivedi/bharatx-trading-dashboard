@@ -3,20 +3,25 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: BharatX Trading Dashboard API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: signals
+    description: Trading signal operations
+  - name: trades
+    description: Paper trade operations
+  - name: dashboard
+    description: Dashboard summary operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +29,179 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /signals/latest:
+    get:
+      operationId: getLatestSignal
+      tags: [signals]
+      summary: Get the latest trading signal and engine scores
+      responses:
+        "200":
+          description: Latest signal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Signal"
+
+  /signals:
+    get:
+      operationId: listSignals
+      tags: [signals]
+      summary: List recent signals
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: symbol
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of signals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Signal"
+
+  /trades:
+    get:
+      operationId: listTrades
+      tags: [trades]
+      summary: List all paper trades
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, closed, all]
+            default: all
+        - name: symbol
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of trades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trade"
+    post:
+      operationId: createTrade
+      tags: [trades]
+      summary: Place a paper trade
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTradeBody"
+      responses:
+        "201":
+          description: Trade created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trade"
+
+  /trades/{id}:
+    get:
+      operationId: getTrade
+      tags: [trades]
+      summary: Get a single trade
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Trade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trade"
+    patch:
+      operationId: closeTrade
+      tags: [trades]
+      summary: Close an open trade
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloseTradeBody"
+      responses:
+        "200":
+          description: Closed trade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trade"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get P&L summary, win rate, and open position count
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/pnl-chart:
+    get:
+      operationId: getPnlChart
+      tags: [dashboard]
+      summary: Get cumulative P&L over time for chart
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: P&L chart data points
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PnlDataPoint"
+
+  /dashboard/engine-accuracy:
+    get:
+      operationId: getEngineAccuracy
+      tags: [dashboard]
+      summary: Get per-engine accuracy stats from historical signals
+      responses:
+        "200":
+          description: Engine accuracy list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EngineAccuracy"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +209,178 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    EngineScore:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [BULL, BEAR, FLAT, OFF]
+        score:
+          type: integer
+      required: [name, status, score]
+
+    Signal:
+      type: object
+      properties:
+        id:
+          type: integer
+        symbol:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        direction:
+          type: string
+          enum: [LONG, SHORT, NEUTRAL]
+        totalScore:
+          type: integer
+        engines:
+          type: array
+          items:
+            $ref: "#/components/schemas/EngineScore"
+        price:
+          type: number
+        atr:
+          type: number
+        stopLoss:
+          type: number
+        takeProfit:
+          type: number
+        ema200Status:
+          type: string
+          enum: [ABOVE, BELOW, OFF]
+        inSession:
+          type: boolean
+      required: [id, symbol, timestamp, direction, totalScore, engines, price]
+
+    Trade:
+      type: object
+      properties:
+        id:
+          type: integer
+        symbol:
+          type: string
+        direction:
+          type: string
+          enum: [LONG, SHORT]
+        entryPrice:
+          type: number
+        exitPrice:
+          type: number
+          nullable: true
+        stopLoss:
+          type: number
+        takeProfit:
+          type: number
+        quantity:
+          type: integer
+        status:
+          type: string
+          enum: [open, closed]
+        pnl:
+          type: number
+          nullable: true
+        pnlPercent:
+          type: number
+          nullable: true
+        signalId:
+          type: integer
+          nullable: true
+        openedAt:
+          type: string
+          format: date-time
+        closedAt:
+          type: string
+          format: date-time
+          nullable: true
+        closeReason:
+          type: string
+          nullable: true
+      required: [id, symbol, direction, entryPrice, quantity, status, stopLoss, takeProfit, openedAt]
+
+    CreateTradeBody:
+      type: object
+      properties:
+        symbol:
+          type: string
+        direction:
+          type: string
+          enum: [LONG, SHORT]
+        entryPrice:
+          type: number
+        stopLoss:
+          type: number
+        takeProfit:
+          type: number
+        quantity:
+          type: integer
+        signalId:
+          type: integer
+          nullable: true
+      required: [symbol, direction, entryPrice, stopLoss, takeProfit, quantity]
+
+    CloseTradeBody:
+      type: object
+      properties:
+        exitPrice:
+          type: number
+        closeReason:
+          type: string
+      required: [exitPrice]
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalTrades:
+          type: integer
+        openTrades:
+          type: integer
+        closedTrades:
+          type: integer
+        winningTrades:
+          type: integer
+        losingTrades:
+          type: integer
+        winRate:
+          type: number
+        totalPnl:
+          type: number
+        totalPnlPercent:
+          type: number
+        avgPnlPerTrade:
+          type: number
+        bestTrade:
+          type: number
+        worstTrade:
+          type: number
+        currentCapital:
+          type: number
+      required: [totalTrades, openTrades, closedTrades, winningTrades, losingTrades, winRate, totalPnl, totalPnlPercent, avgPnlPerTrade, bestTrade, worstTrade, currentCapital]
+
+    PnlDataPoint:
+      type: object
+      properties:
+        date:
+          type: string
+        cumulativePnl:
+          type: number
+        tradeCount:
+          type: integer
+      required: [date, cumulativePnl, tradeCount]
+
+    EngineAccuracy:
+      type: object
+      properties:
+        engine:
+          type: string
+        bullSignals:
+          type: integer
+        bearSignals:
+          type: integer
+        accuracy:
+          type: number
+      required: [engine, bullSignals, bearSignals, accuracy]
